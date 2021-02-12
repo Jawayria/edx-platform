@@ -476,6 +476,42 @@ class CourseModeViewTest(CatalogIntegrationMixin, UrlResetMixin, ModuleStoreTest
 
         self.assertEqual(course_modes, expected_modes)
 
+    @httpretty.activate
+    @ddt.data(
+        (0, 50),
+        ('0.00', '50.00'),
+    )
+    @ddt.unpack
+    def test_min_price_type(self, min_price_zero, min_price):
+        # Create the course modes with respective prices
+        mode_audit = CourseModeFactory.create(
+            mode_slug='audit',
+            course_id=self.course.id,
+            min_price=min_price_zero
+        )
+        mode_verified = CourseModeFactory.create(
+            mode_slug='verified',
+            course_id=self.course.id,
+            min_price=min_price
+        )
+
+        # Enroll the user in the test course
+        CourseEnrollmentFactory(
+            is_active=True,
+            course_id=self.course.id,
+            user=self.user
+        )
+
+        # Verify that the prices render correctly
+        url = reverse('course_modes_choose', args=[six.text_type(self.course.id)])
+        response = self.client.get(url)
+
+        self.assertEqual(mode_audit.min_price, 0)
+        self.assertEqual(mode_verified.min_price, 50)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, mode_audit.min_price)
+        self.assertContains(response, mode_verified.min_price)
+
     @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', 'Test only valid in lms')
     @with_comprehensive_theme("edx.org")
     @httpretty.activate

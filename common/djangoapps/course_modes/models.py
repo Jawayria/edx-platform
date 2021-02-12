@@ -205,6 +205,10 @@ class CourseMode(models.Model):
             raise ValidationError(
                 _(u"Professional education modes are not allowed to have expiration_datetime set.")
             )
+        # REV-1632: temporarily handle receiving the min_price as a
+        # string and converting to int to be saved in the course_modes table.
+        if not isinstance(self.min_price, int):
+            self.min_price = int(float(self.min_price))
 
         mode_config = settings.COURSE_ENROLLMENT_MODES.get(self.mode_slug, {})
         min_price_for_mode = mode_config.get('min_price', 0)
