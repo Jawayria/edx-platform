@@ -16,7 +16,7 @@ edx-platform allows for both 1st party auth, where you provide the LMS with
 your credentials and it gives you back some session tokens, and also 3rd party
 auth, in which you are directed to a 3rd party to authenticate and then
 redirected to the LMS with a token from that third party which is exchanged for
-1st party(LMS) session tokens.
+1st party (LMS) session tokens.
 
 Login User View
 ~~~~~~~~~~~~~~~
@@ -60,11 +60,11 @@ part of the login flow.
   login view but is applied to the ``/third_party_auth_context`` endpoint
   (``TPAContextView``) to rate limit 3rd party auth requests.  The default
   rate limit for this endpoint is ``20 requests per minute``.  Since this rate
-  limiting is only applied to a 3rd party auth specific view, it only impact
+  limiting is only applied to a 3rd party auth specific view, it only impacts
   the rate at which 3rd party auth is possible.
 
 * `MAX_FAILED_LOGIN_ATTEMPTS`_ - This is an optional feature that can be
-  enable(disabled by default) which will limit the number of failed logins a
+  enable (disabled by default) which will limit the number of failed logins a
   user is allowed to have before their account is locked out.  This feature
   works slightly differently from the other rate limiting features in that it
   persists the number of failures and does not reset them until we have had a
