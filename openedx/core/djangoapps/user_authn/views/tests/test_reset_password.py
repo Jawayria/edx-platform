@@ -1,3 +1,4 @@
+import pytest
 """
 Test the various password reset flows
 """
@@ -118,12 +119,9 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         bad_pwd_req.user = AnonymousUser()
         bad_pwd_resp = password_reset(bad_pwd_req)
         # If they've got an unusable password, we return a successful response code
-        self.assertEqual(bad_pwd_resp.status_code, 200)
+        assert bad_pwd_resp.status_code == 200
         obj = json.loads(bad_pwd_resp.content.decode('utf-8'))
-        self.assertEqual(obj, {
-            'success': True,
-            'value': "('registration/password_reset_done.html', [])",
-        })
+        assert obj == {'success': True, 'value': "('registration/password_reset_done.html', [])"}
         self.assert_no_events_were_emitted()
 
     @patch(
@@ -141,12 +139,9 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         # Note: even if the email is bad, we return a successful response code
         # This prevents someone potentially trying to "brute-force" find out which
         # emails are and aren't registered with edX
-        self.assertEqual(bad_email_resp.status_code, 200)
+        assert bad_email_resp.status_code == 200
         obj = json.loads(bad_email_resp.content.decode('utf-8'))
-        self.assertEqual(obj, {
-            'success': True,
-            'value': "('registration/password_reset_done.html', [])",
-        })
+        assert obj == {'success': True, 'value': "('registration/password_reset_done.html', [])"}
         self.assert_no_events_were_emitted()
 
     @patch(
@@ -182,11 +177,11 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         password_reset_req.user = user
         password_reset_req.site = Mock(domain='example.com')
         good_resp = password_reset(password_reset_req)
-        self.assertEqual(good_resp.status_code, 200)
+        assert good_resp.status_code == 200
 
         # then the rate limiter should kick in and give a HttpForbidden response
         bad_resp = password_reset(password_reset_req)
-        self.assertEqual(bad_resp.status_code, 403)
+        assert bad_resp.status_code == 403
 
         cache.clear()
 
@@ -198,11 +193,11 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         sent_message = mail.outbox[0]
         body = sent_message.body
 
-        self.assertIn(expected['subject'], sent_message.subject)
-        self.assertIn(expected['body'], body)
-        self.assertEqual(sent_message.from_email, from_email)
-        self.assertEqual(len(sent_message.to), 1)
-        self.assertIn(self.user.email, sent_message.to)
+        assert expected['subject'] in sent_message.subject
+        assert expected['body'] in body
+        assert sent_message.from_email == from_email
+        assert len(sent_message.to) == 1
+        assert self.user.email in sent_message.to
 
     def test_ratelimitted_from_same_ip_with_different_email(self):
         """
@@ -212,14 +207,14 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         good_req = self.request_factory.post('/password_reset/', {'email': 'thisdoesnotexist@foo.com'})
         good_req.user = AnonymousUser()
         good_resp = password_reset(good_req)
-        self.assertEqual(good_resp.status_code, 200)
+        assert good_resp.status_code == 200
 
         # change the email ID and verify that the rate limiter should kick in and
         # give a Forbidden response if the request is from same IP.
         bad_req = self.request_factory.post('/password_reset/', {'email': 'thisdoesnotexist2@foo.com'})
         bad_req.user = AnonymousUser()
         bad_resp = password_reset(bad_req)
-        self.assertEqual(bad_resp.status_code, 403)
+        assert bad_resp.status_code == 403
 
         cache.clear()
 
@@ -255,11 +250,11 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         )
 
         if new_ip:
-            self.assertEqual(reset_request.META.get('REMOTE_ADDR'), new_ip)
+            assert reset_request.META.get('REMOTE_ADDR') == new_ip
 
         reset_request.user = AnonymousUser()
         response = password_reset(reset_request)
-        self.assertEqual(response.status_code, status)
+        assert response.status_code == status
 
     @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', "Test only valid in LMS")
     @ddt.data(('plain_text', "You're receiving this e-mail because you requested a password reset"),
@@ -274,12 +269,12 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         dot_access_token = dot_factories.AccessTokenFactory(user=self.user, application=dot_application)
         dot_factories.RefreshTokenFactory(user=self.user, application=dot_application, access_token=dot_access_token)
         good_resp = password_reset(good_req)
-        self.assertEqual(good_resp.status_code, 200)
-        self.assertFalse(dot_models.AccessToken.objects.filter(user=self.user).exists())
-        self.assertFalse(dot_models.RefreshToken.objects.filter(user=self.user).exists())
+        assert good_resp.status_code == 200
+        assert not dot_models.AccessToken.objects.filter(user=self.user).exists()
+        assert not dot_models.RefreshToken.objects.filter(user=self.user).exists()
         obj = json.loads(good_resp.content.decode('utf-8'))
-        self.assertTrue(obj['success'])
-        self.assertIn('e-mailed you instructions for setting your password', obj['value'])
+        assert obj['success']
+        assert 'e-mailed you instructions for setting your password' in obj['value']
 
         from_email = configuration_helpers.get_value('email_from_address', settings.DEFAULT_FROM_EMAIL)
         sent_message = mail.outbox[0]
@@ -291,11 +286,11 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
 
         body = bodies[body_type]
 
-        self.assertIn("Password reset", sent_message.subject)
-        self.assertIn(expected_output, body)
-        self.assertEqual(sent_message.from_email, from_email)
-        self.assertEqual(len(sent_message.to), 1)
-        self.assertIn(self.user.email, sent_message.to)
+        assert 'Password reset' in sent_message.subject
+        assert expected_output in body
+        assert sent_message.from_email == from_email
+        assert len(sent_message.to) == 1
+        assert self.user.email in sent_message.to
 
         self.assert_event_emitted(
             SETTING_CHANGE_INITIATED, user_id=self.user.id, setting=u'password', old=None, new=None,
@@ -303,9 +298,9 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
 
         # Test that the user is not active
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertFalse(self.user.is_active)
+        assert not self.user.is_active
 
-        self.assertIn('password_reset_confirm/', body)
+        assert 'password_reset_confirm/' in body
         re.search(r'password_reset_confirm/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/', body).groupdict()
 
     @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', "Test only valid in LMS")
@@ -326,7 +321,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         msg = sent_message.body
         expected_msg = "Please go to the following page and choose a new password:\n\n" + protocol
 
-        self.assertIn(expected_msg, msg)
+        assert expected_msg in msg
 
         self.assert_event_emitted(
             SETTING_CHANGE_INITIATED, user_id=self.user.id, setting=u'password', old=None, new=None
@@ -356,11 +351,11 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
                 reset_msg = u"you requested a password reset for your user account at {}"
                 reset_msg = reset_msg.format(site_name)
 
-                self.assertIn(reset_msg, msg)
-                self.assertIn(settings.AUTHN_MICROFRONTEND_URL, msg)
+                assert reset_msg in msg
+                assert settings.AUTHN_MICROFRONTEND_URL in msg
 
                 sign_off = u"The {} Team".format(platform_name)
-                self.assertIn(sign_off, msg)
+                assert sign_off in msg
 
                 self.assert_event_emitted(
                     SETTING_CHANGE_INITIATED, user_id=self.user.id, setting=u'password', old=None, new=None
@@ -396,12 +391,12 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
             fake_get_value('PLATFORM_NAME')
         )
 
-        self.assertIn(reset_msg, body)
+        assert reset_msg in body
 
         self.assert_event_emitted(
             SETTING_CHANGE_INITIATED, user_id=self.user.id, setting=u'password', old=None, new=None
         )
-        self.assertEqual(sent_message.from_email, "no-reply@fakeuniversity.com")
+        assert sent_message.from_email == 'no-reply@fakeuniversity.com'
 
     @ddt.data(
         ('invalidUid', 'invalid_token'),
@@ -428,7 +423,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         bad_request.user = AnonymousUser()
         PasswordResetConfirmWrapper.as_view()(bad_request, uidb36=uidb36, token=token)
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertFalse(self.user.is_active)
+        assert not self.user.is_active
 
     def test_reset_password_good_token(self):
         """
@@ -453,7 +448,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         PasswordResetConfirmWrapper.as_view()(good_reset_req, uidb36=self.uidb36, token='set-password')
 
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertTrue(self.user.is_active)
+        assert self.user.is_active
 
     def test_reset_password_good_token_with_anonymous_user(self):
         """
@@ -478,13 +473,13 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         PasswordResetConfirmWrapper.as_view()(good_reset_req, uidb36=self.uidb36, token='set-password')
 
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertTrue(self.user.is_active)
+        assert self.user.is_active
 
     def test_password_reset_fail(self):
         """
         Tests that if we provide mismatched passwords, user is not marked as active.
         """
-        self.assertFalse(self.user.is_active)
+        assert not self.user.is_active
 
         request_params = {'new_password1': 'password1', 'new_password2': 'password2'}
         confirm_request = self.request_factory.post(self.password_reset_confirm_url, data=request_params)
@@ -496,14 +491,14 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
 
         # Verify the response status code is: 200 with password reset fail and also verify that
         # the user is not marked as active.
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(User.objects.get(pk=self.user.pk).is_active)
+        assert resp.status_code == 200
+        assert not User.objects.get(pk=self.user.pk).is_active
 
     def test_password_reset_retired_user_fail(self):
         """
         Tests that if a retired user attempts to reset their password, it fails.
         """
-        self.assertFalse(self.user.is_active)
+        assert not self.user.is_active
 
         # Retire the user.
         UserRetirementRequest.create_retirement_request(self.user)
@@ -514,8 +509,8 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
 
         # Verify the response status code is: 200 with password reset fail and also verify that
         # the user is not marked as active.
-        self.assertEqual(resp.status_code, 200)
-        self.assertFalse(User.objects.get(pk=self.user.pk).is_active)
+        assert resp.status_code == 200
+        assert not User.objects.get(pk=self.user.pk).is_active
 
     def test_password_reset_normalize_password(self):
         # pylint: disable=anomalous-unicode-escape-in-string
@@ -536,7 +531,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         user = User.objects.get(pk=self.user.pk)
         salt_val = user.password.split('$')[1]
         expected_user_password = make_password(unicodedata.normalize('NFKC', u'p\u212bssword'), salt_val)
-        self.assertEqual(expected_user_password, user.password)
+        assert expected_user_password == user.password
 
         self.assert_email_sent_successfully({
             'subject': 'Password reset completed',
@@ -574,7 +569,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         # Make a password reset request with minimum/maximum passwords characters.
         response = PasswordResetConfirmWrapper.as_view()(confirm_request, uidb36=self.uidb36, token=self.token)
 
-        self.assertEqual(response.context_data['err_msg'], password_dict['error_message'])
+        assert response.context_data['err_msg'] == password_dict['error_message']
 
     @patch.object(PasswordResetConfirmView, 'dispatch')
     @patch("openedx.core.djangoapps.site_configuration.helpers.get_value", fake_get_value)
@@ -586,9 +581,9 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
         good_reset_req.user = self.user
         PasswordResetConfirmWrapper.as_view()(good_reset_req, uidb36=self.uidb36, token=self.token)
         confirm_kwargs = reset_confirm.call_args[1]
-        self.assertEqual(confirm_kwargs['extra_context']['platform_name'], 'Fake University')
+        assert confirm_kwargs['extra_context']['platform_name'] == 'Fake University'
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertTrue(self.user.is_active)
+        assert self.user.is_active
 
     @unittest.skipUnless(settings.ROOT_URLCONF == 'lms.urls', "Test only valid in LMS")
     @ddt.data('Crazy Awesome Site', 'edX')
@@ -607,7 +602,7 @@ class ResetPasswordTests(EventTestMixin, CacheIsolationTestCase):
             sent_message = mail.outbox[0]
             subj = sent_message.subject
 
-            self.assertIn(platform_name, subj)
+            assert platform_name in subj
 
     def test_reset_password_with_other_user_link(self):
         """
@@ -655,29 +650,9 @@ class PasswordResetViewTest(UserAPITestCase):
 
         # Verify that the form description matches what we expect
         form_desc = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(form_desc["method"], "post")
-        self.assertEqual(form_desc["submit_url"], reverse("password_change_request"))
-        self.assertEqual(form_desc["fields"], [
-            {
-                "name": "email",
-                "defaultValue": "",
-                "type": "email",
-                "required": True,
-                "label": "Email",
-                "placeholder": "username@domain.com",
-                "instructions": u"The email address you used to register with {platform_name}".format(
-                    platform_name=settings.PLATFORM_NAME
-                ),
-                "restrictions": {
-                    "min_length": EMAIL_MIN_LENGTH,
-                    "max_length": EMAIL_MAX_LENGTH
-                },
-                "errorMessages": {},
-                "supplementalText": "",
-                "supplementalLink": "",
-                "loginIssueSupportLink": "https://support.example.com/login-issue-help.html",
-            }
-        ])
+        assert form_desc['method'] == 'post'
+        assert form_desc['submit_url'] == reverse('password_change_request')
+        assert form_desc['fields'] == [{'name': 'email', 'defaultValue': '', 'type': 'email', 'required': True, 'label': 'Email', 'placeholder': 'username@domain.com', 'instructions': u'The email address you used to register with {platform_name}'.format(platform_name=settings.PLATFORM_NAME), 'restrictions': {'min_length': EMAIL_MIN_LENGTH, 'max_length': EMAIL_MAX_LENGTH}, 'errorMessages': {}, 'supplementalText': '', 'supplementalLink': '', 'loginIssueSupportLink': 'https://support.example.com/login-issue-help.html'}]
 
 
 @skip_unless_lms
@@ -701,10 +676,10 @@ class PasswordResetTokenValidateViewTest(UserAPITestCase):
         """
         response = self.client.post(self.url, data={'token': self.token})
         json_response = json.loads(response.content.decode('utf-8'))
-        self.assertTrue(json_response.get('is_valid'))
+        assert json_response.get('is_valid')
 
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertTrue(self.user.is_active)
+        assert self.user.is_active
 
     def test_reset_password_invalid_token(self):
         """
@@ -712,7 +687,7 @@ class PasswordResetTokenValidateViewTest(UserAPITestCase):
         """
         response = self.client.post(self.url, data={'token': 'invalid-token'})
         json_response = json.loads(response.content.decode('utf-8'))
-        self.assertFalse(json_response.get('is_valid'))
+        assert not json_response.get('is_valid')
 
     def test_reset_password_token_with_other_user(self):
         """
@@ -723,10 +698,10 @@ class PasswordResetTokenValidateViewTest(UserAPITestCase):
 
         response = self.client.post(self.url, {'token': self.token})
         json_response = json.loads(response.content.decode('utf-8'))
-        self.assertFalse(json_response.get('is_valid'))
+        assert not json_response.get('is_valid')
 
         self.user = User.objects.get(pk=self.user.pk)
-        self.assertFalse(self.user.is_active)
+        assert not self.user.is_active
 
 
 @ddt.ddt
@@ -778,7 +753,7 @@ class ResetPasswordAPITests(EventTestMixin, CacheIsolationTestCase):
         reset_view = LogistrationPasswordResetView.as_view()
         json_response = reset_view(post_request, uidb36=uidb36, token=token).render()
         json_response = json.loads(json_response.content.decode('utf-8'))
-        self.assertEqual(json_response.get('reset_status'), status)
+        assert json_response.get('reset_status') == status
 
     def test_none_token_in_password_reset_request(self):
         """
@@ -790,7 +765,7 @@ class ResetPasswordAPITests(EventTestMixin, CacheIsolationTestCase):
         post_request = self.create_reset_request(self.uidb36, self.token, False)
         post_request.user = AnonymousUser()
         reset_view = LogistrationPasswordResetView.as_view()
-        self.assertRaises(Exception, reset_view(post_request, uidb36=uidb36, token=token))
+        pytest.raises(Exception, reset_view(post_request, uidb36=uidb36, token=token))
 
     def test_password_mismatch_in_reset_request(self):
         """
@@ -801,7 +776,7 @@ class ResetPasswordAPITests(EventTestMixin, CacheIsolationTestCase):
         reset_view = LogistrationPasswordResetView.as_view()
         json_response = reset_view(post_request, uidb36=self.uidb36, token=self.token).render()
         json_response = json.loads(json_response.content.decode('utf-8'))
-        self.assertFalse(json_response.get('reset_status'))
+        assert not json_response.get('reset_status')
 
     def test_account_recovery_using_forgot_password(self):
         """
@@ -814,7 +789,7 @@ class ResetPasswordAPITests(EventTestMixin, CacheIsolationTestCase):
         reset_view(post_request, uidb36=self.uidb36, token=self.token)
 
         updated_user = User.objects.get(id=self.user.id)
-        self.assertEqual(updated_user.email, self.secondary_email)
+        assert updated_user.email == self.secondary_email
 
         self.assert_event_emitted(
             SETTING_CHANGE_INITIATED,
@@ -841,8 +816,8 @@ class ResetPasswordAPITests(EventTestMixin, CacheIsolationTestCase):
         sent_message = mail.outbox[0]
         body = sent_message.body
 
-        self.assertIn('Password reset completed', sent_message.subject)
-        self.assertIn('This is to confirm that you have successfully changed your password', body)
-        self.assertEqual(sent_message.from_email, from_email)
-        self.assertEqual(len(sent_message.to), 1)
-        self.assertIn(updated_user.email, sent_message.to[0])
+        assert 'Password reset completed' in sent_message.subject
+        assert 'This is to confirm that you have successfully changed your password' in body
+        assert sent_message.from_email == from_email
+        assert len(sent_message.to) == 1
+        assert updated_user.email in sent_message.to[0]
