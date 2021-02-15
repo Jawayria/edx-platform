@@ -12,7 +12,7 @@ import openedx.core.djangoapps.django_comment_common.comment_client as comment_c
 class AjaxExceptionTestCase(TestCase):  # lint-amnesty, pylint: disable=missing-class-docstring
 
     def setUp(self):
-        super(AjaxExceptionTestCase, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         self.a = middleware.AjaxExceptionMiddleware()
         self.request1 = django.http.HttpRequest()
         self.request0 = django.http.HttpRequest()
@@ -27,7 +27,7 @@ class AjaxExceptionTestCase(TestCase):  # lint-amnesty, pylint: disable=missing-
         self.assertIsInstance(response1, middleware.JsonError)
         self.assertEqual(self.exception1.status_code, response1.status_code)
         self.assertEqual(
-            {"errors": json.loads(text_type(self.exception1))},
+            {"errors": json.loads(str(self.exception1))},
             json.loads(response1.content.decode('utf-8'))
         )
 
@@ -35,7 +35,7 @@ class AjaxExceptionTestCase(TestCase):  # lint-amnesty, pylint: disable=missing-
         self.assertIsInstance(response2, middleware.JsonError)
         self.assertEqual(self.exception2.status_code, response2.status_code)
         self.assertEqual(
-            {"errors": [text_type(self.exception2)]},
+            {"errors": [str(self.exception2)]},
             json.loads(response2.content.decode('utf-8'))
         )
 

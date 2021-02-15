@@ -4,14 +4,16 @@ Tests for Discussion API serializers
 
 
 import itertools
+from unittest import mock
 
 import ddt
 import httpretty
-import mock
 import six
 from django.test.client import RequestFactory
 from six.moves.urllib.parse import urlparse
 
+from common.djangoapps.student.tests.factories import UserFactory
+from common.djangoapps.util.testing import UrlResetMixin
 from lms.djangoapps.discussion.django_comment_client.tests.utils import ForumsEnableMixin
 from lms.djangoapps.discussion.rest_api.serializers import CommentSerializer, ThreadSerializer, get_context
 from lms.djangoapps.discussion.rest_api.tests.utils import (
@@ -29,8 +31,6 @@ from openedx.core.djangoapps.django_comment_common.models import (
     FORUM_ROLE_STUDENT,
     Role
 )
-from common.djangoapps.student.tests.factories import UserFactory
-from common.djangoapps.util.testing import UrlResetMixin
 from xmodule.modulestore import ModuleStoreEnum
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.tests.django_utils import SharedModuleStoreTestCase
@@ -45,12 +45,12 @@ class SerializerTestMixin(ForumsEnableMixin, CommentsServiceMockMixin, UrlResetM
     @classmethod
     @mock.patch.dict("django.conf.settings.FEATURES", {"ENABLE_DISCUSSION_SERVICE": True})
     def setUpClass(cls):
-        super(SerializerTestMixin, cls).setUpClass()
+        super().setUpClass()
         cls.course = CourseFactory.create()
 
     @mock.patch.dict("django.conf.settings.FEATURES", {"ENABLE_DISCUSSION_SERVICE": True})
     def setUp(self):
-        super(SerializerTestMixin, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         httpretty.reset()
         httpretty.enable()
         self.addCleanup(httpretty.reset)
@@ -149,7 +149,7 @@ class ThreadSerializerSerializationTest(SerializerTestMixin, SharedModuleStoreTe
         Create a thread with the given overrides, plus some useful test data.
         """
         merged_overrides = {
-            "course_id": six.text_type(self.course.id),
+            "course_id": str(self.course.id),
             "user_id": str(self.author.id),
             "username": self.author.username,
             "read": True,
@@ -169,7 +169,7 @@ class ThreadSerializerSerializationTest(SerializerTestMixin, SharedModuleStoreTe
     def test_basic(self):
         thread = make_minimal_cs_thread({
             "id": "test_thread",
-            "course_id": six.text_type(self.course.id),
+            "course_id": str(self.course.id),
             "commentable_id": "test_topic",
             "user_id": str(self.author.id),
             "username": self.author.username,
@@ -246,7 +246,7 @@ class ThreadSerializerSerializationTest(SerializerTestMixin, SharedModuleStoreTe
 class CommentSerializerTest(SerializerTestMixin, SharedModuleStoreTestCase):
     """Tests for CommentSerializer."""
     def setUp(self):
-        super(CommentSerializerTest, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         self.endorser = UserFactory.create()
         self.endorsed_at = "2015-05-18T12:34:56Z"
 
@@ -412,12 +412,12 @@ class ThreadSerializerDeserializationTest(
     @classmethod
     @mock.patch.dict("django.conf.settings.FEATURES", {"ENABLE_DISCUSSION_SERVICE": True})
     def setUpClass(cls):
-        super(ThreadSerializerDeserializationTest, cls).setUpClass()
+        super().setUpClass()
         cls.course = CourseFactory.create()
 
     @mock.patch.dict("django.conf.settings.FEATURES", {"ENABLE_DISCUSSION_SERVICE": True})
     def setUp(self):
-        super(ThreadSerializerDeserializationTest, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         httpretty.reset()
         httpretty.enable()
         self.addCleanup(httpretty.reset)
@@ -427,7 +427,7 @@ class ThreadSerializerDeserializationTest(
         self.request = RequestFactory().get("/dummy")
         self.request.user = self.user
         self.minimal_data = {
-            "course_id": six.text_type(self.course.id),
+            "course_id": str(self.course.id),
             "topic_id": "test_topic",
             "type": "discussion",
             "title": "Test Title",
@@ -435,7 +435,7 @@ class ThreadSerializerDeserializationTest(
         }
         self.existing_thread = Thread(**make_minimal_cs_thread({
             "id": "existing_thread",
-            "course_id": six.text_type(self.course.id),
+            "course_id": str(self.course.id),
             "commentable_id": "original_topic",
             "thread_type": "discussion",
             "title": "Original Title",
@@ -472,7 +472,7 @@ class ThreadSerializerDeserializationTest(
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "commentable_id": ["test_topic"],
                 "thread_type": ["discussion"],
                 "title": ["Test Title"],
@@ -490,7 +490,7 @@ class ThreadSerializerDeserializationTest(
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "commentable_id": ["test_topic"],
                 "thread_type": ["discussion"],
                 "title": ["Test Title"],
@@ -538,7 +538,7 @@ class ThreadSerializerDeserializationTest(
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "commentable_id": ["original_topic"],
                 "thread_type": ["discussion"],
                 "title": ["Original Title"],
@@ -566,7 +566,7 @@ class ThreadSerializerDeserializationTest(
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "commentable_id": ["edited_topic"],
                 "thread_type": ["question"],
                 "title": ["Edited Title"],
@@ -615,11 +615,11 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
     """Tests for ThreadSerializer deserialization."""
     @classmethod
     def setUpClass(cls):
-        super(CommentSerializerDeserializationTest, cls).setUpClass()
+        super().setUpClass()
         cls.course = CourseFactory.create()
 
     def setUp(self):
-        super(CommentSerializerDeserializationTest, self).setUp()  # lint-amnesty, pylint: disable=super-with-arguments
+        super().setUp()
         httpretty.reset()
         httpretty.enable()
         self.addCleanup(httpretty.reset)
@@ -638,7 +638,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
             "body": "Original body",
             "user_id": str(self.user.id),
             "username": self.user.username,
-            "course_id": six.text_type(self.course.id),
+            "course_id": str(self.course.id),
         }))
 
     def save_and_reserialize(self, data, instance=None):
@@ -649,7 +649,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
         context = get_context(
             self.course,
             self.request,
-            make_minimal_cs_thread({"course_id": six.text_type(self.course.id)})
+            make_minimal_cs_thread({"course_id": str(self.course.id)})
         )
         serializer = CommentSerializer(
             instance,
@@ -674,14 +674,14 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
         )
         saved = self.save_and_reserialize(data)
         expected_url = (
-            "/api/v1/comments/{}".format(parent_id) if parent_id else
+            f"/api/v1/comments/{parent_id}" if parent_id else
             "/api/v1/threads/test_thread/comments"
         )
         self.assertEqual(urlparse(httpretty.last_request().path).path, expected_url)  # lint-amnesty, pylint: disable=no-member
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "body": ["Test body"],
                 "user_id": [str(self.user.id)],
             }
@@ -703,7 +703,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "body": ["Test body"],
                 "user_id": [str(self.user.id)],
                 "endorsed": ["True"],
@@ -797,7 +797,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
         self.assertEqual(
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "body": ["Test body"],
                 "user_id": [str(self.user.id)],
                 "endorsed": ["True"],
@@ -815,7 +815,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
                 "body": ["Original body"],
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "user_id": [str(self.user.id)],
                 "anonymous": ["False"],
                 "anonymous_to_peers": ["False"],
@@ -836,7 +836,7 @@ class CommentSerializerDeserializationTest(ForumsEnableMixin, CommentsServiceMoc
             httpretty.last_request().parsed_body,  # lint-amnesty, pylint: disable=no-member
             {
                 "body": ["Edited body"],
-                "course_id": [six.text_type(self.course.id)],
+                "course_id": [str(self.course.id)],
                 "user_id": [str(self.user.id)],
                 "anonymous": ["False"],
                 "anonymous_to_peers": ["False"],

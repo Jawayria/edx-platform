@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         if len(args) != 1:
-            raise CommandError(u'Must called with arguments: {}'.format(self.args))
+            raise CommandError(f'Must called with arguments: {self.args}')
 
         xml_module_store = XMLModuleStore(
             data_dir=settings.DATA_DIR,
@@ -40,12 +40,12 @@ class Command(BaseCommand):
 
         export_dir = path(args[0])
 
-        for course_id, course_modules in six.iteritems(xml_module_store.modules):
+        for course_id, course_modules in xml_module_store.modules.items():
             course_path = course_id.replace('/', '_')
-            for location, descriptor in six.iteritems(course_modules):
-                location_path = text_type(location).replace('/', '_')
+            for location, descriptor in course_modules.items():
+                location_path = str(location).replace('/', '_')
                 data = {}
-                for field_name, field in six.iteritems(descriptor.fields):
+                for field_name, field in descriptor.fields.items():
                     try:
                         data[field_name] = field.read_json(descriptor)
                     except Exception as exc:  # pylint: disable=broad-except
