@@ -10,7 +10,6 @@ from contextlib import closing
 from datetime import datetime
 
 import httpretty
-import six
 from PIL import Image
 from pytz import UTC
 

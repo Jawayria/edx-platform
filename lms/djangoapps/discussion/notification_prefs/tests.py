@@ -4,7 +4,6 @@
 import json
 from unittest.mock import patch
 
-import six
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import Http404

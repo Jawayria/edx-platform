@@ -9,7 +9,6 @@ from unittest import mock
 
 import ddt
 import httpretty
-import six
 from django.core.exceptions import ValidationError
 from django.test.client import RequestFactory
 from opaque_keys.edx.locator import CourseLocator

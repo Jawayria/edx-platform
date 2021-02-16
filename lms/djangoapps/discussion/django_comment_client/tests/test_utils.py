@@ -9,7 +9,6 @@ from unittest.mock import Mock, patch
 
 import ddt
 import pytest
-import six
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from edx_django_utils.cache import RequestCache

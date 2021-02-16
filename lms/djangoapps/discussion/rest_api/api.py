@@ -7,7 +7,6 @@ import itertools
 from collections import defaultdict
 from enum import Enum
 
-import six
 from django.core.exceptions import ValidationError
 from django.http import Http404
 from django.urls import reverse

@@ -8,7 +8,6 @@ from unittest import mock
 
 import ddt
 import httpretty
-import six
 from django.test.client import RequestFactory
 from six.moves.urllib.parse import urlparse
 

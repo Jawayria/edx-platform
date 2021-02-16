@@ -6,7 +6,6 @@ Views handling read (GET) requests for the Discussion tab and inline discussions
 import logging
 from functools import wraps
 
-import six
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User  # lint-amnesty, pylint: disable=imported-auth-user

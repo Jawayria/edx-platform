@@ -5,7 +5,6 @@ Signal handlers related to discussions.
 
 import logging
 
-import six
 from django.conf import settings
 from django.dispatch import receiver
 from opaque_keys.edx.locator import LibraryLocator

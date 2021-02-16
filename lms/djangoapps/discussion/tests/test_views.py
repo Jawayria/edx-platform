@@ -10,7 +10,6 @@ from unittest.mock import ANY, Mock, call, patch
 
 import ddt
 import pytest
-import six
 from django.http import Http404
 from django.test.client import Client, RequestFactory
 from django.test.utils import override_settings

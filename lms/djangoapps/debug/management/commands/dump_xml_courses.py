@@ -6,11 +6,8 @@ For each of the courses, it loops through all of the modules, and dumps
 each as a separate output file containing the json representation
 of each of its fields (including those fields that are set as default values).
 """
-
-
 import json
 
-import six
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from path import Path as path

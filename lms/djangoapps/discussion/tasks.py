@@ -6,7 +6,6 @@ pertaining to new discussion forum comments.
 
 import logging
 
-import six
 from celery import shared_task
 from celery_utils.logged_task import LoggedTask
 from django.conf import settings  # lint-amnesty, pylint: disable=unused-import

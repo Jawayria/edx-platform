@@ -2,9 +2,6 @@
 """
 Transformers for Discussion-related events.
 """
-
-
-import six
 from django.contrib.auth.models import User
 from django.urls import NoReverseMatch, reverse
 from eventtracking.processors.exceptions import EventEmissionExit

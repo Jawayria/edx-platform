@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from unittest import mock
 
 import ddt
-import six
 from django.contrib.sites.models import Site
 from edx_ace.channel import ChannelType, get_channel_for_message
 from edx_ace.recipient import Recipient

@@ -6,7 +6,6 @@ import logging
 from collections import defaultdict
 from datetime import datetime
 
-import six
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import connection

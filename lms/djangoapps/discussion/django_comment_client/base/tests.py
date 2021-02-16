@@ -9,7 +9,6 @@ from unittest import mock
 from unittest.mock import ANY, Mock, patch
 
 import ddt
-import six
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.test.client import RequestFactory
