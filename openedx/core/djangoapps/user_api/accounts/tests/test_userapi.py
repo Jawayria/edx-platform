@@ -2,10 +2,9 @@
 """
 Unit tests for behavior that is specific to the user api methods
 """
-
+import pdb
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
-from rest_framework.test import APIRequestFactory
 
 from common.djangoapps.student.tests.factories import UserFactory
 
@@ -25,4 +24,17 @@ class TestUser(APITestCase):
         response = self.client.get(self.uri)
         self.assertEqual(response.status_code, 200,
                          'Expected Response Code 200, received {0} instead.'
+                         .format(response.status_code))
+
+    def test_user_get_ratelimit(self):
+
+        for _ in range(10):
+            response = self.client.get(self.uri)
+            self.assertEqual(response.status_code, 200,
+                         'Expected Response Code 200, received {0} instead.'
+                         .format(response.status_code))
+
+        response = self.client.get(self.uri)
+        self.assertEqual(response.status_code, 403,
+                         'Expected Response Code 403, received {0} instead.'
                          .format(response.status_code))
