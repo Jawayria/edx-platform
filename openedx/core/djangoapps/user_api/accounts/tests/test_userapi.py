@@ -2,7 +2,7 @@
 """
 Unit tests for behavior that is specific to the user api methods
 """
-import pdb
+
 from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 
@@ -13,7 +13,9 @@ from openedx.core.djangoapps.user_api.accounts.userprofile_api import UserProfil
 PASSWORD = 'dummy'
 
 class TestUser(APITestCase):
+
     def setUp(self):
+
         self.client = APIClient()
         self.view = UserProfileAPIView.as_view()
         self.uri = reverse('users_list')
@@ -21,12 +23,19 @@ class TestUser(APITestCase):
         self.client.login(username=self.user.username, password=PASSWORD)
 
     def test_list(self):
+        """
+        Testing the user api's list end point
+        """
+
         response = self.client.get(self.uri)
         self.assertEqual(response.status_code, 200,
                          'Expected Response Code 200, received {0} instead.'
                          .format(response.status_code))
 
     def test_user_get_ratelimit(self):
+        """
+        Testing the ratelimit on user api's get method
+        """
 
         for _ in range(10):
             response = self.client.get(self.uri)

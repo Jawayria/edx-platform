@@ -1,7 +1,7 @@
 """
     API for UserProfile model
 """
-import pdb
+
 import datetime
 
 from django.http import HttpResponse
@@ -17,6 +17,9 @@ from .serializers import UserProfileSerializer
 
 
 def ratelimit_reached(request, limit, time_unit):
+    """
+    Checks whether the ratelimit for logged in user has reached
+    """
 
     time_unit_to_secs = {'s':1, 'm':60, 'h':3600, 'd':3600*24}
 
@@ -34,6 +37,9 @@ def ratelimit_reached(request, limit, time_unit):
 
 
 class UsersPagination(PageNumberPagination):
+    """
+    Defines pagination for UsersAPI
+    """
     page_size = 2
     page_size_query_param = 'page_size'
 

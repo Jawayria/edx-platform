@@ -219,6 +219,9 @@ class UserReadOnlySerializer(serializers.Serializer):  # lint-amnesty, pylint: d
 
 
 class UserProfileSerializer(CountryFieldMixin, serializers.ModelSerializer):
+    """
+    Class that serializes UserProfile object
+    """
     class Meta:
         model = UserProfile
         fields = ('user', 'name', 'meta', 'courseware', 'language', 'location', 'year_of_birth', 'gender',
