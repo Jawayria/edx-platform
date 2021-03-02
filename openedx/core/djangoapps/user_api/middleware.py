@@ -2,7 +2,9 @@
 Middleware for user api.
 Adds user's tags to tracking event context.
 """
-
+import datetime
+import pdb
+from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from eventtracking import tracker
@@ -60,3 +62,29 @@ class UserTagsEventContextMiddleware(MiddlewareMixin):
             pass
 
         return response
+
+
+class RateLimitMiddleware(MiddlewareMixin):
+    """
+    Middleware that keeps check on the ratelimit
+    """
+
+    def process_request(self, request):
+        """
+        Checks whether the ratelimit for logged in user has reached
+        """
+        pdb.set_trace()
+        time_unit_to_secs = {'s': 1, 'm': 60, 'h': 3600, 'd': 3600 * 24}
+        time_unit = 'm'
+        limit = 10
+
+
+        if 'rate_limit_value' in request.session:
+            request.session['rate_limit_value'] = request.session['rate_limit_value'] + 1
+        else:
+            request.session['rate_limit_value'] = 1
+            request.session['rate_limit_st_time'] = datetime.datetime.now()
+
+        if (datetime.datetime.now() - request.session['rate_limit_st_time']).seconds < time_unit_to_secs[time_unit] and \
+            request.session['rate_limit_value'] > limit:
+            return HttpResponse(status=403)

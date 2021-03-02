@@ -16,26 +16,6 @@ from common.djangoapps.student.models import (
 from .serializers import UserProfileSerializer
 
 
-def ratelimit_reached(request, limit, time_unit):
-    """
-    Checks whether the ratelimit for logged in user has reached
-    """
-
-    time_unit_to_secs = {'s':1, 'm':60, 'h':3600, 'd':3600*24}
-
-    if 'rate_limit_value' in request.session:
-        request.session['rate_limit_value'] = request.session['rate_limit_value'] + 1
-    else:
-        request.session['rate_limit_value'] = 1
-        request.session['rate_limit_st_time'] = datetime.datetime.now()
-
-    if (datetime.datetime.now() - request.session['rate_limit_st_time']).seconds < time_unit_to_secs[time_unit] and \
-        request.session['rate_limit_value'] > limit:
-        return True
-
-    return False
-
-
 class UsersPagination(PageNumberPagination):
     """
     Defines pagination for UsersAPI
@@ -51,9 +31,6 @@ class UserProfileAPIView(APIView):
     queryset=''
 
     def get(self, request, pk=None):
-
-        if ratelimit_reached(request, 10, 'm'):
-            return HttpResponse(status=403)
 
         page = UsersPagination()
         if pk is not None:
