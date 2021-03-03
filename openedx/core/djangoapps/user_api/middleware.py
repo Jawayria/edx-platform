@@ -2,7 +2,9 @@
 Middleware for user api.
 Adds user's tags to tracking event context.
 """
-
+import datetime
+import pdb
+from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from eventtracking import tracker
@@ -60,3 +62,36 @@ class UserTagsEventContextMiddleware(MiddlewareMixin):
             pass
 
         return response
+
+
+class RateLimitMiddleware(MiddlewareMixin):
+    """
+    Middleware that keeps check on the ratelimit
+    """
+
+    def process_request(self, request):
+        """
+        Checks whether the ratelimit for logged in user has reached
+        """
+        time_unit_to_secs = {'s': 1, 'm': 60, 'h': 3600, 'd': 3600 * 24}
+        time_unit = 'm'
+        limit = 10
+
+        if 'ratelimit' not in request.session:
+            request.session['ratelimit'] = {request.path:{'counter': 1, 'st_time': datetime.datetime.now()}}
+
+        elif request.path not in request.session['ratelimit'] or (datetime.datetime.now() - \
+            request.session['ratelimit'][request.path]['st_time']).seconds >= time_unit_to_secs[time_unit]:
+            request.session['ratelimit'][request.path] = {'counter': 1, 'st_time': datetime.datetime.now()}
+
+        else:
+            request.session['ratelimit'][request.path]['counter'] = \
+            request.session['ratelimit'][request.path]['counter'] + 1
+
+        if (datetime.datetime.now() - request.session['ratelimit'][request.path]['st_time']).seconds < \
+            time_unit_to_secs[time_unit] and request.session['ratelimit'][request.path]['counter'] > limit:
+            return HttpResponse(status=403)
+
+        request.session.modified = True
+
+        return HttpResponse(status=200)

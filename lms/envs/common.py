@@ -1989,6 +1989,9 @@ MIDDLEWARE = [
     'common.djangoapps.student.middleware.UserStandingMiddleware',
     'openedx.core.djangoapps.contentserver.middleware.StaticContentServer',
 
+    # Check Ratelimit
+    'openedx.core.djangoapps.user_api.middleware.RateLimitMiddleware',
+
     # Adds user tags to tracking events
     # Must go before TrackMiddleware, to get the context set up
     'openedx.core.djangoapps.user_api.middleware.UserTagsEventContextMiddleware',
