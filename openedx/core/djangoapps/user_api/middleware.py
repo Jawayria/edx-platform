@@ -73,18 +73,25 @@ class RateLimitMiddleware(MiddlewareMixin):
         """
         Checks whether the ratelimit for logged in user has reached
         """
-        pdb.set_trace()
         time_unit_to_secs = {'s': 1, 'm': 60, 'h': 3600, 'd': 3600 * 24}
         time_unit = 'm'
         limit = 10
 
+        if 'ratelimit' not in request.session:
+            request.session['ratelimit'] = {request.path:{'counter': 1, 'st_time': datetime.datetime.now()}}
 
-        if 'rate_limit_value' in request.session:
-            request.session['rate_limit_value'] = request.session['rate_limit_value'] + 1
+        elif request.path not in request.session['ratelimit'] or (datetime.datetime.now() - \
+            request.session['ratelimit'][request.path]['st_time']).seconds >= time_unit_to_secs[time_unit]:
+            request.session['ratelimit'][request.path] = {'counter': 1, 'st_time': datetime.datetime.now()}
+
         else:
-            request.session['rate_limit_value'] = 1
-            request.session['rate_limit_st_time'] = datetime.datetime.now()
+            request.session['ratelimit'][request.path]['counter'] = \
+            request.session['ratelimit'][request.path]['counter'] + 1
 
-        if (datetime.datetime.now() - request.session['rate_limit_st_time']).seconds < time_unit_to_secs[time_unit] and \
-            request.session['rate_limit_value'] > limit:
+        if (datetime.datetime.now() - request.session['ratelimit'][request.path]['st_time']).seconds < \
+            time_unit_to_secs[time_unit] and request.session['ratelimit'][request.path]['counter'] > limit:
             return HttpResponse(status=403)
+
+        request.session.modified = True
+
+        return HttpResponse(status=200)
