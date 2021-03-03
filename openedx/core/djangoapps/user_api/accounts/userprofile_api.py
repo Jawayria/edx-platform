@@ -2,11 +2,8 @@
     API for UserProfile model
 """
 
-import datetime
-
-from django.http import HttpResponse
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 
@@ -24,19 +21,9 @@ class UsersPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 
 
-class UserProfileAPIView(APIView):
+class UserProfileAPIView(GenericAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = UserProfileSerializer
     pagination_class = UsersPagination
-    queryset=''
+    queryset=UserProfile.objects.all()
 
-    def get(self, request, pk=None):
-
-        page = UsersPagination()
-        if pk is not None:
-            queryset = UserProfile.objects.get(pk=pk)
-        else:
-            queryset = UserProfile.objects.all()
-
-        serializer = UserProfileSerializer(page.paginate_queryset(queryset, request), many=True)
-        return Response(serializer.data)
